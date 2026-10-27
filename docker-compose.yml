@@ -1,0 +1,21 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment: {POSTGRES_USER: rag, POSTGRES_PASSWORD: rag, POSTGRES_DB: rag}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: {test: ["CMD-SHELL", "pg_isready -U rag"], interval: 3s, retries: 20}
+  app:
+    build: .
+    env_file: [{path: .env, required: false}]
+    environment:
+      DATABASE_URL: postgresql://rag:rag@db:5432/rag
+      LLM_PROVIDER: ${LLM_PROVIDER:-fake}
+    ports: ["8000:8000"]
+    depends_on: {db: {condition: service_healthy}}
+  # On-prem mode: docker compose --profile onprem up, and set LLM_PROVIDER=ollama
+  ollama:
+    image: ollama/ollama
+    profiles: [onprem]
+    volumes: [ollama:/root/.ollama]
+    ports: ["11434:11434"]
+volumes: {pgdata: {}, ollama: {}}
