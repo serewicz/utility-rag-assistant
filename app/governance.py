@@ -12,6 +12,7 @@ from pathlib import Path
 
 import yaml
 
+from . import refresh
 from .ingest import parse_front_matter
 
 DEFAULT_OWNER = "unassigned"
@@ -47,11 +48,10 @@ def report(rag, docs_dir: Path, cfg_path: Path) -> dict:
     cfg = load_config(cfg_path)
     meta = _file_meta(docs_dir)
     refreshed = {}
-    try:  # the nightly refresh (refresh.py) records the latest check per document
+    refresh.init(rag.store)
+    if True:  # the nightly refresh (refresh.py) records the latest check per document
         for doc, ts_checked, ts_changed in rag.store.q("SELECT doc, last_checked, last_changed FROM source_state"):
             refreshed[doc] = dict(last_checked=ts_checked, last_changed=ts_changed)
-    except Exception:  # noqa: BLE001  table not there yet
-        pass
     rows = rag.store.q("""SELECT doc, title, label, source_url, COUNT(*) FROM chunks
                           GROUP BY doc, title, label, source_url ORDER BY label, doc""")
     sources = []
@@ -74,6 +74,7 @@ def report(rag, docs_dir: Path, cfg_path: Path) -> dict:
                    data_leaves_network=p == "openai" and "api.openai.com" in s.openai_base,
                    live_tools=["LCRA Hydromet lake levels"] if s.hydromet_live else []),
         policy_notes=cfg.get("policy_notes", "/policy"),
+        refresh=dict(enabled=s.refresh_enabled, hour_central=s.refresh_hour),
         totals=dict(sources=len(sources), chunks=sum(x["chunks"] for x in sources),
                     unowned=sum(x["owner"] == DEFAULT_OWNER for x in sources),
                     by_label={lb: sum(x["label"] == lb for x in sources) for lb in sorted({x["label"] for x in sources})}),

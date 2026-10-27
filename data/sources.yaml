@@ -1,0 +1,39 @@
+# Public pages the nightly refresh re-checks. file is relative to data/docs.
+# Only list public pages you are allowed to fetch. robots.txt is checked on every run.
+sources:
+- file: lcra/lcra-agricultural-irrigation-use.md
+  url: https://www.lcra.org/water/permits-contracts/water-supply-contracts/agricultural-irrigation-use/
+- file: lcra/lcra-dams-and-lakes.md
+  url: https://www.lcra.org/water/dams-and-lakes/
+- file: lcra/lcra-drought.md
+  url: https://www.lcra.org/water/drought/
+- file: lcra/lcra-firm-water-use.md
+  url: https://www.lcra.org/water/permits-contracts/water-supply-contracts/firm-water-use/
+- file: lcra/lcra-flood-management.md
+  url: https://www.lcra.org/water/flood-management/
+- file: lcra/lcra-flood.md
+  url: https://www.lcra.org/water/flood/
+- file: lcra/lcra-floodgate-operations-notification-system.md
+  url: https://www.lcra.org/water/flood-management/floodgate-operations-notification-system/
+- file: lcra/lcra-highland-lakes-overview.md
+  url: https://www.lcra.org/water/highland-lakes-overview/
+- file: lcra/lcra-key-elevations-for-lake-travis-during-floods.md
+  url: https://www.lcra.org/water/flood-management/key-elevations-for-lake-travis-during-floods/
+- file: lcra/lcra-lake-lowerings.md
+  url: https://www.lcra.org/water/quality/lake-lowerings/
+- file: lcra/lcra-mandatory-water-use-curtailment.md
+  url: https://www.lcra.org/water/permits-contracts/water-supply-contracts/mandatory-water-use-curtailment/
+- file: lcra/lcra-updating-the-water-management-plan.md
+  url: https://www.lcra.org/water/water-supply-planning/water-management-plan-for-lower-colorado-river-basin/updating-the-water-management-plan/
+- file: lcra/lcra-water-management-plan-for-lower-colorado-river-basin.md
+  url: https://www.lcra.org/water/water-supply-planning/water-management-plan-for-lower-colorado-river-basin/
+- file: lcra/lcra-water-supply-operations.md
+  url: https://www.lcra.org/water/water-supply-planning/water-supply-operations/
+- file: lcra/lcra-water-supply-planning.md
+  url: https://www.lcra.org/water/water-supply-planning/
+- file: lcra/lcra-water-use-restrictions.md
+  url: https://www.lcra.org/water/permits-contracts/water-supply-contracts/water-use-restrictions/
+- file: lcra/lcra-water-use-summary.md
+  url: https://www.lcra.org/water/water-supply-planning/water-use-summary/
+- file: lcra/lcra-wirtz-dam-project.md
+  url: https://www.lcra.org/water/dams-and-lakes/wirtz-dam-project/

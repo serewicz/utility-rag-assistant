@@ -23,3 +23,6 @@ class Settings:
     price_out: float = field(default_factory=lambda: float(_env("PRICE_OUTPUT_PER_M", "0.60")))
     top_k: int = field(default_factory=lambda: int(_env("TOP_K", "4")))
     hydromet_live: bool = field(default_factory=lambda: _env("HYDROMET_LIVE", "0") == "1")
+    # Nightly refresh of public pages (app/refresh.py). Off unless REFRESH_ENABLED=1.
+    refresh_enabled: bool = field(default_factory=lambda: _env("REFRESH_ENABLED", "0") == "1")
+    refresh_hour: int = field(default_factory=lambda: int(_env("REFRESH_HOUR", "2")))  # Central time, 0-23

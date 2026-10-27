@@ -6,7 +6,8 @@ small{color:#555}.fb button{font-size:.9rem;padding:.1rem .4rem;margin-right:.3r
 <p>Demo users: <b>guest</b> (public), <b>maria</b> (field-tech), <b>dev</b> and <b>tim</b> (cip-analyst). <a href="/dashboard">dashboard</a> · <a href="/compare">side-by-side access</a> · <a href="/governance">governance</a> · <a href="/metrics">metrics (JSON)</a></p>
 <select id="u"><option>guest</option><option>maria</option><option>dev</option><option>tim</option></select>
 <input id="q" size="60" placeholder="Ask about CIP standards or outage procedures"><button onclick="ask()">Ask</button>
-<p><button onclick="briefing()" style="background:#b00020;color:#fff;border:0;border-radius:4px">Storm briefing</button> <small>Live lake levels + floodgate rules + FONS, with sources</small></p>
+<p><button onclick="briefing('flood')" style="background:#b00020;color:#fff;border:0;border-radius:4px">Storm briefing</button> <small>Live lake levels + floodgate rules + FONS, with sources</small></p>
+<p><button onclick="briefing('drought')" style="background:#a05a00;color:#fff;border:0;border-radius:4px">Drought briefing</button> <small>Lake levels + storage triggers + curtailment stages, with sources</small></p>
 <div id="log"></div>
 <script>
 async function ask(){const q=document.getElementById('q').value,u=document.getElementById('u').value;
@@ -19,9 +20,9 @@ function fb(qid,u){return qid?`<div class=fb data-q="${qid}" data-u="${u}"><smal
 async function rate(b,v){const d=b.parentElement,c=d.querySelector('input').value;
 const r=await fetch('/feedback',{method:'POST',headers:{'Content-Type':'application/json','X-User':d.dataset.u},body:JSON.stringify({qid:d.dataset.q,rating:v,comment:c})});
 d.innerHTML=r.ok?'<small>Thanks, feedback saved. It shows on the dashboard.</small>':'<small>Could not save feedback.</small>';}
-async function briefing(){const u=document.getElementById('u').value,log=document.getElementById('log');
-log.insertAdjacentHTML('afterbegin',`<div class=q>${u}: Storm briefing</div>`);
-const r=await fetch('/briefing/flood',{method:'POST',headers:{'X-User':u}});const j=await r.json();
+async function briefing(kind){const u=document.getElementById('u').value,log=document.getElementById('log');
+log.insertAdjacentHTML('afterbegin',`<div class=q>${u}: ${kind=='flood'?'Storm':'Drought'} briefing</div>`);
+const r=await fetch('/briefing/'+kind,{method:'POST',headers:{'X-User':u}});const j=await r.json();
 const esc=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;');
 const src=j.sources.map(s=>`[${s.n}] <a href="${s.source_url}" target=_blank>${s.title}</a> (${s.label})`).join('<br>');
 const warn=j.live_ok?'':`<b style="color:#b00020">${esc(j.live_error)} Showing documents only.</b><br>`;

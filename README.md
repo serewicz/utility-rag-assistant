@@ -77,6 +77,11 @@ Open `http://localhost:8000/dashboard` for questions per day, cost, latency, the
 - `http://localhost:8000/compare`: the same question asked as two users, side by side. Sources only one role can see are highlighted.
 - `http://localhost:8000/governance`: every data source with its owner, label, link, chunk count and freshness, plus the active model and whether data leaves the network. Owners are set in `data/governance.yaml`. Starter policy: [docs/policy-notes.md](docs/policy-notes.md), mapped to the NIST AI RMF.
 
+## Drought briefing and nightly refresh
+
+- **Drought briefing** (button on the chat page): live Lake Travis and Lake Buchanan levels, combined-storage triggers from the Water Management Plan, how curtailment works, and what customers are asked to do, with a citation on every line.
+- **Nightly refresh**: re-checks the public lcra.org pages in `data/sources.yaml` at 2 AM Central (`REFRESH_ENABLED`, `REFRESH_HOUR`), respects `robots.txt`, re-ingests pages that changed, and shows a changelog on `/governance`. Admins can run it now: `curl -X POST -H "X-User: tim" localhost:8000/admin/refresh`.
+
 ## Quickstart (no keys, no Docker)
 
 ```bash
@@ -125,7 +130,7 @@ Unknown users get `public`. Unlabeled documents get `cip-restricted`. Both fail 
 
 ## Status
 
-Works and is tested: ingestion and chunking, citations, RBAC with leak tests, query logging and `/metrics`, golden-set evals in CI, the fake provider, the SQLite store, the web chat page.
+Works and is tested: ingestion and chunking, citations, RBAC with leak tests, query logging and `/metrics`, the dashboard, gap report and feedback, the side-by-side access view, the governance page, both briefings, and the nightly refresh (network mocked), golden-set evals in CI, the fake provider, the SQLite store, the web chat page.
 
 Written but not yet tested end to end: the OpenAI and Ollama providers. `docker compose` runs (verified by Tim on Linux). See [docs/08-next-steps.md](docs/08-next-steps.md).
 

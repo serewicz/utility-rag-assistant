@@ -94,3 +94,44 @@ label_owners: {cip-restricted: CIP Senior Manager}
 ```
 
 The page links to [policy notes](policy-notes.md), a starter policy organized by the NIST AI RMF functions (Govern, Map, Measure, Manage). The JSON at `/api/governance` is the seed of a separate governance repo with a model and use-case registry, a risk assessment template and a full RMF mapping. Keep the data here, and keep the policy work there.
+
+## Part 3: A second briefing, and keeping the documents current
+
+### Drought briefing
+
+The storm briefing (chapter 9) covers the wet months. The **Drought briefing** button covers the dry ones. It's built the same way, in `app/drought.py`:
+
+1. Run a few fixed retrieval queries, filtered by the user's role, and re-check every label (defense in depth).
+2. Pull sentences that match each section: storage and triggers, how curtailment works, what customers are asked to do. Sentences with numbers go first, because thresholds and percentages are what people act on.
+3. Add the live Lake Travis and Lake Buchanan levels from Hydromet, in Central time, and compare them to "full" (681 ft and 1,020 ft), but only if a retrieved sentence states that number. If Hydromet fails, the briefing says so and uses documents only.
+4. With a real model, send those facts to the model for a cleaner summary. With the offline `fake` provider, fill a template. Either way the structured facts and sources come back too.
+5. Log it like any other query, so it shows up in cost and usage on the dashboard.
+
+Hydromet reports lake elevations, not storage. So the briefing never computes acre-feet itself. Storage numbers come only from cited LCRA pages. When you demo it, say that. It's the kind of detail that earns trust with engineers.
+
+**Exercise:** download the LCRA Drought Contingency Plan PDF into `data/docs/lcra/`, label it `public` in `data/docs/labels.yaml`, rebuild, and run the briefing again. Which section gets better?
+
+### Nightly refresh
+
+Every utility asks, "Who keeps this current?" The answer here is `app/refresh.py`:
+
+- `data/sources.yaml` lists each public page and the local file it feeds. Only list pages you're allowed to fetch.
+- A small background thread wakes at `REFRESH_HOUR` Central time (default 2 AM) when `REFRESH_ENABLED=1`. Docker Compose turns it on, and tests leave it off. It's a plain thread, not a job framework, so you can read the whole scheduler in ten lines.
+- An admin can run it any time with `curl -X POST -H "X-User: tim" localhost:8000/admin/refresh`.
+- For each page it checks `robots.txt` first, fetches the page, pulls out the readable text (headings, paragraphs, list items, without the menus), and hashes it:
+  - **First check:** record the hash as a baseline and leave the committed file alone. The committed files were cleaned by hand and the evals were tuned on them.
+  - **Changed since the last check:** rewrite the local file (keeping its label and title), update its `retrieved` date, and re-ingest.
+  - **Unchanged:** update "last checked" only.
+- Every event goes into `refresh_log`, shown as the changelog on the governance page.
+
+Two honest limits to mention in a demo: refreshed files live inside the container, so `docker compose up --build` resets them to the committed versions. And automatic text extraction is rougher than hand cleaning, so after a big page change, run the evals from the dashboard. In production you'd put the docs on a volume and have a content owner approve changes before they're ingested. That's a governance decision, which is why the owner column exists.
+
+## What you can say in the room
+
+- "It tells us what it can't answer, and that list tells us what to add next."
+- "Every answer can be rated, and the ratings are on the dashboard."
+- "Here's the same question as a guest and as a CIP analyst. The restricted note never reaches the guest."
+- "Every source has an owner, a label and a refresh date. Here's which model reads it, and whether the data leaves our network."
+- "It costs this much per question, and here's the quality score from last night's eval run."
+
+None of that is magic. It's measurement, ownership and access control around a model, which is how AI becomes a force multiplier for the people already doing the work.

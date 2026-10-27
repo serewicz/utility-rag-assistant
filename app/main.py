@@ -9,7 +9,8 @@ from pydantic import BaseModel
 
 from .config import Settings
 from . import measure, rbac
-from . import governance
+from . import governance, refresh
+from .drought import drought_briefing
 from .briefing import flood_briefing
 from .ingest import ingest_dir
 from .providers import get_provider
@@ -65,11 +66,14 @@ def compare(rag: RAG, question: str, users: list[str]) -> dict:
 
 
 def create_app(rag: RAG | None = None, docs_dir: Path = ROOT / "data" / "docs",
-               gov_path: Path = ROOT / "data" / "governance.yaml") -> FastAPI:
+               gov_path: Path = ROOT / "data" / "governance.yaml",
+               manifest: Path = ROOT / "data" / "sources.yaml") -> FastAPI:
     rag = rag or build()
     app = FastAPI(title="Utility RAG Assistant")
     app.state.rag = rag
     measure.init(rag.store)
+    refresh.init(rag.store)
+    app.state.refresh_fetch = None  # tests inject a mock here
     if rag.store.stats()["chunks"] == 0:
         ingest_dir(docs_dir, rag.store, rag.provider)
 
@@ -82,6 +86,20 @@ def create_app(rag: RAG | None = None, docs_dir: Path = ROOT / "data" / "docs",
     def briefing_flood(x_user: str = Header(default="guest")):
         # Storm briefing: live lake levels + flood rules + FONS, with citations.
         return flood_briefing(rag, x_user)
+
+    @app.post("/briefing/drought")
+    def briefing_drought(x_user: str = Header(default="guest")):
+        # Drought briefing: live levels + storage triggers + curtailment, with citations.
+        return drought_briefing(rag, x_user)
+
+    @app.post("/admin/refresh")
+    def refresh_now(x_user: str = Header(default="guest")):
+        require_admin(x_user)
+        return refresh.run_refresh(rag, docs_dir, manifest, app.state.refresh_fetch)
+
+    @app.get("/api/refresh/log")
+    def refresh_log():
+        return refresh.changelog(rag.store)
 
     @app.get("/metrics")
     def metrics():
@@ -152,5 +170,7 @@ def create_app(rag: RAG | None = None, docs_dir: Path = ROOT / "data" / "docs",
     def index():
         return FileResponse(ROOT / "app" / "static" / "index.html")
 
+    if rag.s.refresh_enabled:
+        app.state.scheduler = refresh.start_scheduler(rag, docs_dir, manifest, rag.s.refresh_hour)
     return app
 
