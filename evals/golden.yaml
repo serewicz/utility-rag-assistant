@@ -1,0 +1,33 @@
+# Golden set: question, who asks, which doc must be retrieved, and words the answer must contain.
+- question: How often must security patches be evaluated for applicability?
+  user: guest
+  expect_doc: cip-007-system-security-management.md
+  answer_contains: ["35"]
+- question: How quickly must access be removed after a termination?
+  user: guest
+  expect_doc: cip-004-personnel-training.md
+  answer_contains: ["24 hours"]
+- question: How long must security event logs be retained?
+  user: guest
+  expect_doc: cip-007-system-security-management.md
+  answer_contains: ["90"]
+- question: How are BES Cyber Systems categorized by impact?
+  user: guest
+  expect_doc: cip-002-bes-cyber-system-categorization.md
+  answer_contains: ["high", "medium"]
+- question: When must the baseline configuration be updated after a change?
+  user: guest
+  expect_doc: cip-010-configuration-change-management.md
+  answer_contains: ["30"]
+- question: What must a technician get from the control center before touching equipment after a feeder trip?
+  user: maria
+  expect_doc: sample-outage-procedure-feeder-trip.md
+  answer_contains: ["switching order"]
+- question: What is the restoration priority order during a storm?
+  user: maria
+  expect_doc: sample-outage-procedure-storm-restoration.md
+  answer_contains: ["public safety"]
+- question: How often must security awareness be reinforced?
+  user: guest
+  expect_doc: cip-004-personnel-training.md
+  answer_contains: ["quarter"]
