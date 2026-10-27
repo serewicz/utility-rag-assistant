@@ -1,0 +1,22 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Side-by-side access view</title>
+<style>body{font-family:system-ui;max-width:1100px;margin:2rem auto;padding:0 1rem}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.col{background:#f4f4f4;border-radius:8px;padding:.8rem}
+pre{white-space:pre-wrap;font-family:inherit}.only{background:#ffe3e3;border-left:4px solid #b00020;padding:0 .3rem}
+input,select,button{font-size:1rem;padding:.4rem}small{color:#555}</style></head><body>
+<h1>Side-by-side access view</h1>
+<p>Same question, two users, two roles. Sources highlighted in red were retrieved for one user only, because the other user's role can't read them.
+ <a href="/">ask</a> · <a href="/dashboard">dashboard</a> · <a href="/governance">governance</a></p>
+<p><select id=a><option>guest</option><option>maria</option><option>dev</option><option selected>guest</option></select> vs
+<select id=b><option>guest</option><option>maria</option><option>dev</option><option selected>tim</option></select>
+<input id=q size=55 value="What firewall protects the Electronic Security Perimeter at the control center?"><button onclick="go()">Compare</button></p>
+<p><small>Try: "What firewall protects the Electronic Security Perimeter at the control center?" (guest vs tim), or "What must a technician get from the control center after a feeder trip?" (guest vs maria).</small></p>
+<div id=summary></div><div class=cols id=cols></div>
+<script>
+const esc=t=>String(t??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+async function go(){cols.innerHTML='Asking...';
+const r=await fetch('/compare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q.value,users:[a.value,b.value]})});
+const j=await r.json();if(!r.ok){cols.innerHTML=esc(j.detail);return}
+summary.innerHTML=`<p><b>Shared sources:</b> ${j.shared.length} · <b>${esc(j.columns[0].user)} only:</b> ${j.columns[0].only_this_user.length} · <b>${esc(j.columns[1].user)} only:</b> ${j.columns[1].only_this_user.length}</p>`;
+cols.innerHTML=j.columns.map(c=>`<div class=col><h3>${esc(c.user)} <small>(role: ${esc(c.role)})</small></h3><pre>${esc(c.answer)}</pre><small>${c.sources.map(s=>`<div class="${s.only_this_user?'only':''}">[${s.n}] ${esc(s.title)} (${esc(s.label)})${s.only_this_user?' <b>only this user</b>':''}</div>`).join('')}</small></div>`).join('');}
+const opts=['guest','maria','dev','tim'];for(const s of [a,b]){const v=s.value;s.innerHTML=opts.map(o=>`<option ${o==v?'selected':''}>${o}</option>`).join('')}
+</script></body></html>

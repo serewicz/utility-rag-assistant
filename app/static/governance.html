@@ -1,0 +1,22 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Governance</title>
+<style>body{font-family:system-ui;max-width:1100px;margin:2rem auto;padding:0 1rem}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #ddd;padding:.3rem;text-align:left;font-size:.88rem;vertical-align:top}
+.cip-restricted{color:#b00020;font-weight:600}.field-tech{color:#a05a00}.public{color:#1b6e1b}.un{color:#b00020}
+.box{background:#f4f6fa;border-radius:8px;padding:.7rem 1rem;margin:.6rem 0}small{color:#555}</style></head><body>
+<h1>Governance</h1>
+<p>What data the assistant reads, who owns it, how sensitive it is, how fresh it is, and which model sees it.
+ <a href="/">ask</a> · <a href="/dashboard">dashboard</a> · <a href="/compare">side-by-side access</a> · <a id=pol href="/policy">policy notes</a> · <a href="/api/governance">JSON</a></p>
+<div class=box id=sys></div><div class=box id=model></div>
+<h2>Data sources</h2><p><small>Owners come from <code>data/governance.yaml</code>. "unassigned" means nobody has signed up to keep that source accurate yet.</small></p>
+<div id=src></div>
+<h2>Refresh changelog</h2><div id=log><small>Not available yet.</small></div>
+<script>
+const esc=t=>String(t??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const ct=ts=>ts?new Date(ts*1000).toLocaleString('en-US',{timeZone:'America/Chicago',dateStyle:'medium',timeStyle:'short'})+' CT':'';
+async function load(){const g=await (await fetch('/api/governance')).json(),m=g.model,s=g.system;pol.href=g.policy_notes;
+sys.innerHTML=`<b>${esc(s.name)}</b><br>Business owner: <span class="${s.business_owner=='unassigned'?'un':''}">${esc(s.business_owner)}</span> · Risk tier: ${esc(s.risk_tier)}<br><small>${esc(s.use_case)}</small>`;
+model.innerHTML=`<b>Active model</b><br>Provider: ${esc(m.provider)} · Chat model: ${esc(m.chat_model)} · Embedding model: ${esc(m.embedding_model)}<br>Endpoint: ${esc(m.endpoint)} · Data leaves the network: <b>${m.data_leaves_network?'yes (hosted API)':'no'}</b> · Live tools: ${m.live_tools.map(esc).join(', ')||'none'}<br><small>${g.totals.sources} sources, ${g.totals.chunks} chunks, ${g.totals.unowned} without an owner. By label: ${Object.entries(g.totals.by_label).map(([k,v])=>k+' '+v).join(', ')}</small>`;
+src.innerHTML='<table><tr><th>Source</th><th>Label</th><th>Owner</th><th>Chunks</th><th>Retrieved</th><th>Last checked</th><th>Last changed</th></tr>'+g.sources.map(x=>`<tr><td>${x.source_url?`<a href="${esc(x.source_url)}" target=_blank>${esc(x.title)}</a>`:esc(x.title)}<br><small>${esc(x.doc)}</small></td><td class="${esc(x.label)}">${esc(x.label)}</td><td class="${x.owner=='unassigned'?'un':''}">${esc(x.owner)}</td><td>${x.chunks}</td><td>${esc(x.retrieved)}</td><td>${ct(x.last_checked)}</td><td>${ct(x.last_changed)}</td></tr>`).join('')+'</table>';
+const c=await fetch('/api/refresh/log');if(c.ok){const l=await c.json();log.innerHTML=l.length?'<table><tr><th>When</th><th>Document</th><th>What happened</th></tr>'+l.map(e=>`<tr><td>${ct(e.ts)}</td><td>${esc(e.doc)}</td><td>${esc(e.event)} <small>${esc(e.detail)}</small></td></tr>`).join('')+'</table>':'<small>No refresh runs yet.</small>'}}
+load();
+</script></body></html>

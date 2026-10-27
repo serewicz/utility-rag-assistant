@@ -4,11 +4,12 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from pydantic import BaseModel
 
 from .config import Settings
 from . import measure, rbac
+from . import governance
 from .briefing import flood_briefing
 from .ingest import ingest_dir
 from .providers import get_provider
@@ -33,6 +34,11 @@ class Ask(BaseModel):
     question: str
 
 
+class Compare(BaseModel):
+    question: str
+    users: list[str] = ["guest", "tim"]
+
+
 class Feedback(BaseModel):
     qid: str
     rating: int  # 1 = thumbs up, -1 = thumbs down
@@ -44,7 +50,22 @@ def require_admin(user: str):
         raise HTTPException(403, "admin role required")
 
 
-def create_app(rag: RAG | None = None, docs_dir: Path = ROOT / "data" / "docs") -> FastAPI:
+def compare(rag: RAG, question: str, users: list[str]) -> dict:
+    """Ask the same question as two users. Highlight sources only one of them could see."""
+    if len(users) != 2:
+        raise HTTPException(422, "pick exactly two users")
+    cols = [dict(user=u, **rag.ask(u, question)) for u in users]
+    docs = [{s["doc"] for s in c["sources"]} for c in cols]
+    for i, c in enumerate(cols):
+        other = docs[1 - i]
+        for s in c["sources"]:
+            s["only_this_user"] = s["doc"] not in other
+        c["only_this_user"] = sorted(docs[i] - other)
+    return dict(question=question, columns=cols, shared=sorted(docs[0] & docs[1]))
+
+
+def create_app(rag: RAG | None = None, docs_dir: Path = ROOT / "data" / "docs",
+               gov_path: Path = ROOT / "data" / "governance.yaml") -> FastAPI:
     rag = rag or build()
     app = FastAPI(title="Utility RAG Assistant")
     app.state.rag = rag
@@ -65,6 +86,27 @@ def create_app(rag: RAG | None = None, docs_dir: Path = ROOT / "data" / "docs") 
     @app.get("/metrics")
     def metrics():
         return {**rag.store.stats(), "provider": rag.provider.name, "recent": rag.store.recent(10)}
+
+    @app.post("/compare")
+    def compare_ep(body: Compare):
+        # Each column runs with that user's own role. Nothing is shared between the two calls.
+        return compare(rag, body.question, body.users)
+
+    @app.get("/compare")
+    def compare_page():
+        return FileResponse(ROOT / "app" / "static" / "compare.html")
+
+    @app.get("/api/governance")
+    def api_governance():
+        return governance.report(rag, docs_dir, gov_path)
+
+    @app.get("/governance")
+    def governance_page():
+        return FileResponse(ROOT / "app" / "static" / "governance.html")
+
+    @app.get("/policy", response_class=PlainTextResponse)
+    def policy():
+        return (ROOT / "docs" / "policy-notes.md").read_text()
 
     @app.post("/feedback")
     def feedback(body: Feedback, x_user: str = Header(default="guest")):

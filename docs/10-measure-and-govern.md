@@ -59,3 +59,38 @@ Chapter 6 ran the golden set in CI. Now each run is also stored in `eval_runs`, 
 Everything under `/admin/` now checks that the caller is in `ADMIN_USERS` (default `dev,tim`). That includes the existing `/admin/reingest`, which was open before. The user still comes from the demo `X-User` header. In production that would come from your identity provider, and the check would stay the same.
 
 **Exercise:** call `curl -X POST -H "X-User: guest" localhost:8000/admin/reingest`. You should get a 403.
+
+## Part 2: Show the access control, then govern the data
+
+### Side-by-side access view
+
+Chapter 4 proved with tests that restricted chunks never reach the wrong user. Tests convince engineers. Directors need to see it. Open `http://localhost:8000/compare`, pick two users, and ask one question. Each column runs a normal `/ask` as that user, with that user's role, so the view can't leak anything the chat page wouldn't. Sources that only one user could retrieve are highlighted in red.
+
+Good pairs to try:
+
+- **guest vs tim:** "What firewall protects the Electronic Security Perimeter at the control center?" Tim's column cites the (fictional) CIP-restricted note. Guest's column never sees it.
+- **guest vs maria:** "What must a technician get from the control center before touching equipment after a feeder trip?" Maria's field-tech procedure appears only for her.
+
+That's the five-second version of "our sensitive data stays protected."
+
+**Exercise:** add a fifth demo user in `app/rbac.py` with a new role that can read `public` and `cip-restricted` but not `field-tech`. Compare that user against maria.
+
+### Governance page
+
+Open `http://localhost:8000/governance`. It answers the questions any AI review board asks:
+
+- **Which sources?** Every document in the index, with its link and chunk count.
+- **How sensitive?** The label on each one.
+- **Who owns it?** From `data/governance.yaml`. Anything not assigned shows `unassigned` in red. An owner is the person who keeps a source accurate and decides whether it belongs in the assistant at all.
+- **How fresh?** The date it was retrieved, plus the last time the nightly refresh checked it and when it last changed (Part 3).
+- **Which model sees it?** Provider, chat model, embedding model, endpoint, and a plain yes or no on whether data leaves the network. With the default OpenAI endpoint the answer is yes. With Ollama it's no. Say that out loud in a utility meeting before someone asks.
+
+Owners resolve from most specific to least specific: an exact file name, then a file name prefix, then the label, then `unassigned`:
+
+```yaml
+owners: {lcra-drought.md: Water Resources}
+owner_prefixes: {lcra-: Public Information}
+label_owners: {cip-restricted: CIP Senior Manager}
+```
+
+The page links to [policy notes](policy-notes.md), a starter policy organized by the NIST AI RMF functions (Govern, Map, Measure, Manage). The JSON at `/api/governance` is the seed of a separate governance repo with a model and use-case registry, a risk assessment template and a full RMF mapping. Keep the data here, and keep the policy work there.

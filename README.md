@@ -72,6 +72,11 @@ Click **Storm briefing** to show live Lake Travis and Lake Buchanan levels again
 
 Open `http://localhost:8000/dashboard` for questions per day, cost, latency, the unanswered rate, thumbs up and down from the chat page, eval scores over time, and a **gap report** that groups the questions it couldn't answer by topic and suggests which documents to add next. See [chapter 10](docs/10-measure-and-govern.md).
 
+## Show the access control and govern the data
+
+- `http://localhost:8000/compare`: the same question asked as two users, side by side. Sources only one role can see are highlighted.
+- `http://localhost:8000/governance`: every data source with its owner, label, link, chunk count and freshness, plus the active model and whether data leaves the network. Owners are set in `data/governance.yaml`. Starter policy: [docs/policy-notes.md](docs/policy-notes.md), mapped to the NIST AI RMF.
+
 ## Quickstart (no keys, no Docker)
 
 ```bash

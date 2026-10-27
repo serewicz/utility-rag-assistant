@@ -1,0 +1,11 @@
+# Governance config for the /governance page. Edit owners here; anything not listed is "unassigned".
+# This file is not ingested (it is not .md/.txt/.pdf).
+system_name: Utility RAG Assistant (LCRA Highland Lakes POC)
+business_owner: unassigned
+use_case: Answer staff and public questions about Highland Lakes flood operations, water supply and NERC CIP, with citations.
+risk_tier: unassessed   # fill in after the risk assessment (see docs/policy-notes.md)
+policy_notes: /policy
+# Most specific wins: owners (exact file) > owner_prefixes > label_owners > "unassigned".
+owners: {}
+owner_prefixes: {}
+label_owners: {}
