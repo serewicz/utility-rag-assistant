@@ -1,11 +1,12 @@
 <!doctype html><html><head><meta charset="utf-8"><title>Utility RAG Assistant</title>
 <style>body{font-family:system-ui;max-width:780px;margin:2rem auto;padding:0 1rem}
-#log div{margin:.6rem 0;padding:.6rem;border-radius:6px}.q{background:#eef}.a{background:#f4f4f4}
+#log div{margin:.6rem 0;padding:.6rem;border-radius:6px}.q{background:#eef}pre{white-space:pre-wrap;font-family:inherit;margin:0}.a{background:#f4f4f4}
 small{color:#555}input,select,button{font-size:1rem;padding:.4rem}</style></head><body>
 <h1>Utility RAG Assistant</h1>
 <p>Demo users: <b>guest</b> (public), <b>maria</b> (field-tech), <b>dev</b> and <b>tim</b> (cip-analyst). <a href="/metrics">metrics</a></p>
 <select id="u"><option>guest</option><option>maria</option><option>dev</option><option>tim</option></select>
 <input id="q" size="60" placeholder="Ask about CIP standards or outage procedures"><button onclick="ask()">Ask</button>
+<p><button onclick="briefing()" style="background:#b00020;color:#fff;border:0;border-radius:4px">Storm briefing</button> <small>Live lake levels + floodgate rules + FONS, with sources</small></p>
 <div id="log"></div>
 <script>
 async function ask(){const q=document.getElementById('q').value,u=document.getElementById('u').value;
@@ -13,5 +14,12 @@ const log=document.getElementById('log');log.insertAdjacentHTML('afterbegin',`<d
 const r=await fetch('/ask',{method:'POST',headers:{'Content-Type':'application/json','X-User':u},body:JSON.stringify({question:q})});
 const j=await r.json();const src=j.sources.map(s=>`[${s.n}] ${s.title} (${s.label})`).join('<br>');
 log.querySelector('.q').insertAdjacentHTML('afterend',`<div class=a>${j.answer}<br><small>${src}<br>role=${j.role} · ${j.latency_ms} ms · ${j.tokens_in}+${j.tokens_out} tokens · $${j.est_cost_usd}</small></div>`);}
+async function briefing(){const u=document.getElementById('u').value,log=document.getElementById('log');
+log.insertAdjacentHTML('afterbegin',`<div class=q>${u}: Storm briefing</div>`);
+const r=await fetch('/briefing/flood',{method:'POST',headers:{'X-User':u}});const j=await r.json();
+const esc=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const src=j.sources.map(s=>`[${s.n}] <a href="${s.source_url}" target=_blank>${s.title}</a> (${s.label})`).join('<br>');
+const warn=j.live_ok?'':`<b style="color:#b00020">${esc(j.live_error)} Showing documents only.</b><br>`;
+log.querySelector('.q').insertAdjacentHTML('afterend',`<div class=a>${warn}<pre>${esc(j.answer)}</pre><small>${src}<br>role=${j.role} · ${j.latency_ms} ms · ${j.tokens_in}+${j.tokens_out} tokens · $${j.est_cost_usd}</small></div>`);}
 document.getElementById('q').addEventListener('keydown',e=>{if(e.key==='Enter')ask()});
 </script></body></html>

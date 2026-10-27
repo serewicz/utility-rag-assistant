@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from .config import Settings
+from .briefing import flood_briefing
 from .ingest import ingest_dir
 from .providers import get_provider
 from .rag import RAG
@@ -42,6 +43,11 @@ def create_app(rag: RAG | None = None, docs_dir: Path = ROOT / "data" / "docs") 
     def ask(body: Ask, x_user: str = Header(default="guest")):
         # Demo auth: the X-User header. Replace with SSO/OIDC in production.
         return rag.ask(x_user, body.question)
+
+    @app.post("/briefing/flood")
+    def briefing_flood(x_user: str = Header(default="guest")):
+        # Storm briefing: live lake levels + flood rules + FONS, with citations.
+        return flood_briefing(rag, x_user)
 
     @app.get("/metrics")
     def metrics():

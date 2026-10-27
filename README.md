@@ -51,6 +51,22 @@ Pick user **guest** and try:
 
 The assistant retrieves and cites. It does not predict releases or issue warnings; for those, people follow NWS, local emergency management, and LCRA's Flood Operations Notification Service.
 
+## Demo day
+
+Use an API key for the live demo. Answers are fuller and faster, and there is nothing to install in the room.
+
+```bash
+cp .env.example .env      # LLM_PROVIDER=openai is already set
+# edit .env: OPENAI_API_KEY=sk-...   (optional: OPENAI_CHAT_MODEL=gpt-4o-mini)
+docker compose up --build
+```
+
+`.env` is in `.gitignore`. Never commit a key.
+
+For on-prem, change one line: `LLM_PROVIDER=ollama`. Same app, same documents, no data leaves the building. With no key and no network, `LLM_PROVIDER=fake` still runs everything, including the storm briefing.
+
+Click **Storm briefing** to show live Lake Travis and Lake Buchanan levels against the floodgate and key elevations, what operations happen at each level, and how FONS notifications work, all with citations and the reading time in Central time. See [chapter 9](docs/09-lcra-poc.md#storm-briefing-decision-support).
+
 ## Quickstart (no keys, no Docker)
 
 ```bash

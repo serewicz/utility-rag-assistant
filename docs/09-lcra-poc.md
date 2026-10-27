@@ -86,6 +86,59 @@ lcra-firm-drought-contingency-plan.pdf: public
 
 This is the pattern behind "tools" and MCP servers: retrieval answers "what are the rules", the tool answers "what is happening now", and the model combines them.
 
+## Storm briefing: decision support
+
+When a storm is coming, staff answer the same questions over and over: Where is Lake Travis now? How close is it to floodgate releases? Who gets told, and how? The answers live in three places: the Hydromet lake level page, the Mansfield Dam flood operations page, and the FONS page. The **Storm briefing** button puts them on one screen, with sources.
+
+This is AI as a force multiplier, not magic. It does not forecast, does not decide releases, and does not replace River Operations, the National Weather Service or local emergency management. It saves a person the five minutes of looking things up, and it shows where every line came from so that person can check it.
+
+### What it does
+
+`POST /briefing/flood` (the button calls it with the selected user):
+
+1. **Retrieves** flood operation, key elevation and FONS passages, filtered by the user's role like any question. A role only sees documents its labels allow.
+2. **Reads live levels** for Lake Travis (Mansfield Dam gauge) and Lake Buchanan (Buchanan Dam gauge) from Hydromet, and converts the reading time from UTC to Central time.
+3. **Compares** each level to a key elevation only when a retrieved sentence states that elevation: 681 ft and 714 ft for Travis, 1,020 ft for Buchanan. No citation, no comparison.
+4. **Writes the briefing.** With `LLM_PROVIDER=fake` it fills a fixed template from those sentences, so the output is deterministic and testable. With `openai` or `ollama` the same facts go to the model, which writes a tighter summary. The structured facts (`readings`, `rules`, `notify`, `sources`) are returned either way.
+5. **Logs** it in `query_log` as `[briefing/flood] ...`, so it shows up in `/metrics` with latency, tokens and cost.
+
+If Hydromet fails or `HYDROMET_LIVE=0`, the briefing says so at the top in plain words and continues from documents only. A missing number is better than a wrong one.
+
+### Sample (offline `fake` provider, mocked reading)
+
+```
+STORM BRIEFING: Highland Lakes
+
+Current levels
+- Lake Travis: 677.2 ft msl at Oct 26, 2026 8:15 PM CDT [6]; 3.8 ft below 681 ft (floodgate releases can begin / full for water supply) [1]; 36.8 ft below 714 ft (water flows over the Mansfield Dam spillway) [1]
+- Lake Buchanan: 1018.33 ft msl at Oct 26, 2026 8:15 PM CDT [6]; 1.67 ft below 1020 ft (maximum managed level; no flood storage above full) [3]
+
+Key elevations and operations
+- When the elevation of Lake Travis exceeds or is projected to exceed 681 feet above mean sea level (feet msl), LCRA can begin floodgate releases. [1]
+- 714 to 722 feet msl: Water flows over the spillway of Mansfield Dam when Lake Travis rises above 714 feet msl. [1]
+- LCRA manages Lake Buchanan to a maximum level of 1,020 feet above mean sea level (feet msl). [3]
+- These protocols determine how much water LCRA may release, depending on how much water is in the Lake Travis flood pool and downstream conditions. [1]
+- Under USACE protocol, the amount of water LCRA releases from Mansfield Dam is determined based on how much water is in the Lake Travis flood pool, downstream river conditions and the amount of projected inflows into the lake. [1]
+
+Who is notified and how
+- The LCRA Flood Operations Notification Service (FONS) alerts subscribers about flood operations along the Highland Lakes and Lake Bastrop. [4]
+- Subscribers are notified by email, text and/or a recorded phone call. [4]
+- Visit the FONS registration page. [4]
+- Review the instructions and FONS terms of use. [4]
+- Click on the green register button at the top right corner to create an account. [4]
+- Sign up for FONS: https://getrave.com/login/extlcra [4]
+
+Decision support only. LCRA River Operations decides flood releases. For warnings, follow the National Weather Service and local emergency management. FONS is not a flood warning service.
+```
+
+### Why the guardrails matter
+
+- **Citations on every line.** A duty officer can click through to the LCRA page before repeating anything.
+- **Fixed disclaimer.** Every briefing ends with it, whatever the model writes.
+- **No prediction.** The briefing reports levels and published rules. Projected inflows and release decisions stay with LCRA and USACE.
+
+Tests in `tests/test_briefing.py` mock Hydromet and check the math, the Central time conversion, the citations, the fallback, RBAC and the metrics log.
+
 ## Evals
 
 `evals/golden.yaml` has 13 new questions grounded in these pages, each with the document that must be retrieved and words the answer must contain. Every expected answer was checked against the page text.
