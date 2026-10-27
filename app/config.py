@@ -22,3 +22,4 @@ class Settings:
     price_in: float = field(default_factory=lambda: float(_env("PRICE_INPUT_PER_M", "0.15")))
     price_out: float = field(default_factory=lambda: float(_env("PRICE_OUTPUT_PER_M", "0.60")))
     top_k: int = field(default_factory=lambda: int(_env("TOP_K", "4")))
+    hydromet_live: bool = field(default_factory=lambda: _env("HYDROMET_LIVE", "0") == "1")

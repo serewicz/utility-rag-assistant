@@ -14,7 +14,7 @@ import httpx
 
 from .config import Settings
 
-DIM = 256  # fake provider dimension
+DIM = 1024  # fake provider dimension (bigger = fewer hash collisions)
 
 
 @dataclass
@@ -61,12 +61,17 @@ class FakeProvider:
         # Return the context sentence that shares the most words with the question.
         q, _, ctx = user.partition("\n\nContext:\n")
         qw = set(words(q))
-        best, score = "I don't know based on the documents I can access.", 0
-        for line in ctx.splitlines():
-            for sent in re.split(r"(?<=[.!?])\s+", line):
-                s = len(qw & set(words(sent)))
-                if s > score and len(sent) > 20:
-                    best, score = sent.strip(), s
+        sents = [s.strip() for line in ctx.splitlines() for s in re.split(r"(?<=[.!?])\s+", line)]
+        sents = [s for s in sents if len(s) > 20]
+        # Weight each question word by how rare it is in the context (a tiny IDF),
+        # so "Bastrop" counts more than "Mansfield" when every sentence says Mansfield.
+        df = {w: sum(w in set(words(s)) for s in sents) for w in qw}
+        best, score = "I don't know based on the documents I can access.", 0.0
+        for sent in sents:
+            sw = set(words(sent))
+            sc = sum(1.0 / df[w] for w in qw & sw if df[w])
+            if sc > score:
+                best, score = sent, sc
         cite = re.search(r"\[(\d+)\]", ctx)
         text = best + (f" [{cite.group(1)}]" if score and cite else "")
         return ChatResult(text, rough_tokens(system + user), rough_tokens(text))

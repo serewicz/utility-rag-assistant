@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import time
 
-from . import rbac
+from . import hydromet, rbac
 
 SYSTEM = ("You answer questions for utility staff using ONLY the numbered context. "
           "Cite sources like [1]. If the context does not contain the answer, say you don't know. "
@@ -13,6 +13,7 @@ SYSTEM = ("You answer questions for utility staff using ONLY the numbered contex
 class RAG:
     def __init__(self, store, provider, settings):
         self.store, self.provider, self.s = store, provider, settings
+        self.hydromet_fetch = None  # tests inject a mock here
 
     def ask(self, user: str, question: str) -> dict:
         t0 = time.perf_counter()
@@ -21,6 +22,11 @@ class RAG:
         hits = self.store.search(qvec, labels, self.s.top_k)
         # Defense in depth: re-check every hit even though the query already filtered.
         hits = [h for h in hits if h["label"] in labels]
+        # Optional tool call: live lake levels (public data), placed first in the context.
+        if self.s.hydromet_live:
+            live = hydromet.live_context(question, self.hydromet_fetch)
+            if live:
+                hits = [live] + hits
         ctx = "\n\n".join(f"[{i+1}] ({h['title']}) {h['text']}" for i, h in enumerate(hits))
         res = self.provider.chat(SYSTEM, f"Question: {question}\n\nContext:\n{ctx}")
         cost = res.tokens_in / 1e6 * self.s.price_in + res.tokens_out / 1e6 * self.s.price_out

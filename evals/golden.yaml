@@ -31,3 +31,57 @@
   user: guest
   expect_doc: cip-004-personnel-training.md
   answer_contains: ["quarter"]
+
+# ---- LCRA POC: real public LCRA documents in data/docs/lcra (retrieved 2026-10-26) ----
+- question: At what Lake Travis elevation can LCRA begin floodgate releases from Mansfield Dam?
+  user: guest
+  expect_doc: lcra-key-elevations-for-lake-travis-during-floods.md
+  answer_contains: ["681"]
+- question: Above what elevation does water flow over the Mansfield Dam spillway?
+  user: guest
+  expect_doc: lcra-key-elevations-for-lake-travis-during-floods.md
+  answer_contains: ["714"]
+- question: What are the control stage and control flow at Bastrop?
+  user: guest
+  expect_doc: lcra-key-elevations-for-lake-travis-during-floods.md
+  answer_contains: ["45,000"]
+- question: What is the maximum level LCRA manages Lake Buchanan to?
+  user: guest
+  expect_doc: lcra-flood-management.md
+  answer_contains: ["1,020"]
+- question: Which Highland Lake is designed to capture and store floodwaters?
+  user: guest
+  expect_doc: lcra-flood-management.md
+  answer_contains: ["Lake Travis"]
+- question: Is FONS a flood warning service?
+  user: guest
+  expect_doc: lcra-floodgate-operations-notification-system.md
+  answer_contains: ["not a flood warning"]
+- question: How are FONS subscribers notified?
+  user: guest
+  expect_doc: lcra-floodgate-operations-notification-system.md
+  answer_contains: ["text"]
+- question: What is the initial minimum curtailment percentage in the Drought Contingency Plan?
+  user: guest
+  expect_doc: lcra-mandatory-water-use-curtailment.md
+  answer_contains: ["20%"]
+- question: How many consecutive months must the drought last before a Drought Worse than Drought of Record declaration?
+  user: guest
+  expect_doc: lcra-mandatory-water-use-curtailment.md
+  answer_contains: ["24"]
+- question: What is the firm water rate per acre-foot starting with the January 2027 billing cycle?
+  user: guest
+  expect_doc: lcra-firm-water-use.md
+  answer_contains: ["175"]
+- question: How many floodgates does Wirtz Dam have and what is their discharge capacity?
+  user: guest
+  expect_doc: lcra-dams-and-lakes.md
+  answer_contains: ["30,800"]
+- question: How much stored water is available to interruptible agricultural customers for the second season in 2026?
+  user: guest
+  expect_doc: lcra-water-supply-operations.md
+  answer_contains: ["66,000"]
+- question: What sets of water supply conditions does the 2020 WMP establish?
+  user: guest
+  expect_doc: lcra-water-supply-operations.md
+  answer_contains: ["Extraordinary Drought"]

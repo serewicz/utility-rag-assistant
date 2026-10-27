@@ -34,6 +34,14 @@ def parse_front_matter(text: str) -> tuple[dict, str]:
     return yaml.safe_load(m.group(1)) or {}, text[m.end():]
 
 
+_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+
+
+def clean(text: str) -> str:
+    """Keep link text, drop link targets. URLs waste tokens and confuse retrieval."""
+    return _LINK.sub(r"\1", text)
+
+
 def chunk(text: str, size: int = 800, overlap: int = 150) -> list[str]:
     """Split on paragraphs, then pack paragraphs into ~size-char chunks with overlap.
     Paragraph boundaries keep sentences whole; overlap keeps context across the cut."""
@@ -60,8 +68,11 @@ def ingest_dir(root: Path, store, provider) -> int:
         if path.suffix.lower() not in {".md", ".txt", ".pdf"}:
             continue
         meta, body = parse_front_matter(read_file(path))
-        meta = {**meta, **overrides.get(path.name, {})}
-        for i, c in enumerate(chunk(body)):
+        ov = overrides.get(path.name, {})
+        if isinstance(ov, str):  # allow the short form `file.pdf: public`
+            ov = {"label": ov}
+        meta = {**meta, **ov}
+        for i, c in enumerate(chunk(clean(body))):
             rows.append(dict(doc=path.name, title=meta.get("title", path.stem), label=meta.get("label", DEFAULT_LABEL),
                              source_url=meta.get("source_url", ""), ord=i, text=c))
     store.clear()
