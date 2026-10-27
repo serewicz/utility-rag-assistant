@@ -72,6 +72,7 @@ Any OpenAI-compatible server (vLLM, LM Studio, Azure OpenAI) also works with `LL
 | guest | public | public |
 | maria | field-tech | public, field-tech |
 | dev | cip-analyst | public, field-tech, cip-restricted |
+| tim | cip-analyst | public, field-tech, cip-restricted |
 
 Unknown users get `public`. Unlabeled documents get `cip-restricted`. Both fail closed.
 

@@ -15,6 +15,7 @@ USERS: dict[str, str] = {
     "guest": "public",
     "maria": "field-tech",
     "dev": "cip-analyst",
+    "tim": "cip-analyst",
 }
 
 
