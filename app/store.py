@@ -35,6 +35,14 @@ class SQLiteStore:
     def clear(self):
         self.db.execute("DELETE FROM chunks"); self.db.commit()
 
+    def q(self, sql, params=()):
+        """Run portable SQL ('?' placeholders). Returns rows for SELECT, [] otherwise.
+        Used by the measurement, governance and refresh features so both backends share one code path."""
+        cur = self.db.execute(sql, params)
+        rows = cur.fetchall() if cur.description else []
+        self.db.commit()
+        return rows
+
     def add(self, rows):
         self.db.executemany(
             "INSERT INTO chunks(doc,title,label,source_url,ord,text,embedding) VALUES(?,?,?,?,?,?,?)",
@@ -92,6 +100,10 @@ class PgVectorStore(SQLiteStore):
 
     def clear(self):
         self.pg.execute("DELETE FROM chunks")
+
+    def q(self, sql, params=()):
+        cur = self.pg.execute(sql.replace("?", "%s"), params)
+        return cur.fetchall() if cur.description else []
 
     def add(self, rows):
         with self.pg.cursor() as c:

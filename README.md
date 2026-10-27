@@ -17,9 +17,10 @@ AI here is a force multiplier, not magic. It finds the right paragraph fast and 
 | Retrieval hit-rate on the golden set | ≥ 90% | `pytest`, CI |
 | Answer accuracy on the golden set | ≥ 75% | `pytest`, CI |
 | Restricted-content leaks | 0 | `tests/test_rbac.py` |
-| Cost and latency per query | tracked | `/metrics` |
+| Cost and latency per query | tracked | `/metrics`, `/dashboard` |
+| Unanswered rate and user feedback | tracked | `/dashboard` gap report |
 
-Current result with the offline provider: **100% retrieval hit-rate, 95% answer accuracy (21 golden questions), 0 leaks, 26/26 tests pass.**
+Current result with the offline provider: **100% retrieval hit-rate, 95% answer accuracy (21 golden questions), 0 leaks, all tests pass in CI.**
 
 ## Architecture
 
@@ -67,11 +68,15 @@ For on-prem, change one line: `LLM_PROVIDER=ollama`. Same app, same documents, n
 
 Click **Storm briefing** to show live Lake Travis and Lake Buchanan levels against the floodgate and key elevations, what operations happen at each level, and how FONS notifications work, all with citations and the reading time in Central time. See [chapter 9](docs/09-lcra-poc.md#storm-briefing-decision-support).
 
+## Measure it: usage and value dashboard
+
+Open `http://localhost:8000/dashboard` for questions per day, cost, latency, the unanswered rate, thumbs up and down from the chat page, eval scores over time, and a **gap report** that groups the questions it couldn't answer by topic and suggests which documents to add next. See [chapter 10](docs/10-measure-and-govern.md).
+
 ## Quickstart (no keys, no Docker)
 
 ```bash
 pip install -r requirements.txt
-pytest -q                      # 26 tests: ingest, RBAC leak tests, API, evals
+pytest -q                      # ingest, RBAC leak tests, API, briefing, dashboard, evals
 python -m evals.run_evals      # eval report
 uvicorn app.main:create_app --factory --reload
 # open http://localhost:8000 and try users guest, maria, dev
@@ -84,7 +89,7 @@ cp .env.example .env           # set LLM_PROVIDER=openai and OPENAI_API_KEY for 
 docker compose up --build
 ```
 
-After pulling new documents or changing the embedding model, reset the database once so it re-ingests: `docker compose down -v && docker compose up --build` (or `curl -X POST localhost:8000/admin/reingest`).
+After pulling new documents or changing the embedding model, reset the database once so it re-ingests: `docker compose down -v && docker compose up --build` (or, as an admin user, `curl -X POST -H "X-User: tim" localhost:8000/admin/reingest`).
 
 ## On-prem mode (no data leaves the building)
 
@@ -130,5 +135,6 @@ Written but not yet tested end to end: the OpenAI and Ollama providers. `docker 
 7. [Running on-prem](docs/07-on-prem.md)
 8. [Next steps](docs/08-next-steps.md)
 9. [LCRA proof of concept](docs/09-lcra-poc.md)
+10. [Measure and govern](docs/10-measure-and-govern.md)
 
 License: MIT. Author: Tim Serewicz.

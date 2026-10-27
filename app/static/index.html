@@ -1,9 +1,9 @@
 <!doctype html><html><head><meta charset="utf-8"><title>Utility RAG Assistant</title>
 <style>body{font-family:system-ui;max-width:780px;margin:2rem auto;padding:0 1rem}
 #log div{margin:.6rem 0;padding:.6rem;border-radius:6px}.q{background:#eef}pre{white-space:pre-wrap;font-family:inherit;margin:0}.a{background:#f4f4f4}
-small{color:#555}input,select,button{font-size:1rem;padding:.4rem}</style></head><body>
+small{color:#555}.fb button{font-size:.9rem;padding:.1rem .4rem;margin-right:.3rem}input,select,button{font-size:1rem;padding:.4rem}</style></head><body>
 <h1>Utility RAG Assistant</h1>
-<p>Demo users: <b>guest</b> (public), <b>maria</b> (field-tech), <b>dev</b> and <b>tim</b> (cip-analyst). <a href="/metrics">metrics</a></p>
+<p>Demo users: <b>guest</b> (public), <b>maria</b> (field-tech), <b>dev</b> and <b>tim</b> (cip-analyst). <a href="/dashboard">dashboard</a> · <a href="/metrics">metrics (JSON)</a></p>
 <select id="u"><option>guest</option><option>maria</option><option>dev</option><option>tim</option></select>
 <input id="q" size="60" placeholder="Ask about CIP standards or outage procedures"><button onclick="ask()">Ask</button>
 <p><button onclick="briefing()" style="background:#b00020;color:#fff;border:0;border-radius:4px">Storm briefing</button> <small>Live lake levels + floodgate rules + FONS, with sources</small></p>
@@ -13,7 +13,12 @@ async function ask(){const q=document.getElementById('q').value,u=document.getEl
 const log=document.getElementById('log');log.insertAdjacentHTML('afterbegin',`<div class=q>${u}: ${q}</div>`);
 const r=await fetch('/ask',{method:'POST',headers:{'Content-Type':'application/json','X-User':u},body:JSON.stringify({question:q})});
 const j=await r.json();const src=j.sources.map(s=>`[${s.n}] ${s.title} (${s.label})`).join('<br>');
-log.querySelector('.q').insertAdjacentHTML('afterend',`<div class=a>${j.answer}<br><small>${src}<br>role=${j.role} · ${j.latency_ms} ms · ${j.tokens_in}+${j.tokens_out} tokens · $${j.est_cost_usd}</small></div>`);}
+log.querySelector('.q').insertAdjacentHTML('afterend',`<div class=a>${j.answer}<br><small>${src}<br>role=${j.role} · ${j.latency_ms} ms · ${j.tokens_in}+${j.tokens_out} tokens · $${j.est_cost_usd}</small>${fb(j.qid,u)}</div>`);}
+// Feedback: thumbs up/down plus an optional comment, tied to the answer id (qid).
+function fb(qid,u){return qid?`<div class=fb data-q="${qid}" data-u="${u}"><small>Helpful?</small> <button onclick="rate(this,1)">&#128077;</button><button onclick="rate(this,-1)">&#128078;</button><input placeholder="optional comment" size=30></div>`:''}
+async function rate(b,v){const d=b.parentElement,c=d.querySelector('input').value;
+const r=await fetch('/feedback',{method:'POST',headers:{'Content-Type':'application/json','X-User':d.dataset.u},body:JSON.stringify({qid:d.dataset.q,rating:v,comment:c})});
+d.innerHTML=r.ok?'<small>Thanks, feedback saved. It shows on the dashboard.</small>':'<small>Could not save feedback.</small>';}
 async function briefing(){const u=document.getElementById('u').value,log=document.getElementById('log');
 log.insertAdjacentHTML('afterbegin',`<div class=q>${u}: Storm briefing</div>`);
 const r=await fetch('/briefing/flood',{method:'POST',headers:{'X-User':u}});const j=await r.json();

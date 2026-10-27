@@ -19,6 +19,17 @@ USERS: dict[str, str] = {
 }
 
 
+import os
+
+# Who may call /admin/* endpoints (reingest, refresh, run evals). Demo-grade: in production
+# this comes from an identity-provider group, not a header.
+ADMINS: set[str] = set(filter(None, os.environ.get("ADMIN_USERS", "dev,tim").split(",")))
+
+
+def is_admin(user: str) -> bool:
+    return user in ADMINS and user in USERS
+
+
 def labels_for(user: str) -> tuple[str, set[str]]:
     role = USERS.get(user, "public")  # unknown users get the least access
     return role, ROLE_LABELS[role]

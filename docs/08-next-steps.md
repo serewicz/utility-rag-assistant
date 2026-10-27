@@ -17,7 +17,7 @@
 
 - Integration test job in CI with a pgvector service container
 - SSO instead of the `X-User` header
-- Admin endpoint protection (`/admin/reingest` is open in the demo)
+- Real admin authentication: `/admin/*` now checks an admin list (`ADMIN_USERS`), but the user still comes from a demo header, not SSO
 - Hybrid search (keyword + vector) and a re-ranker
 - Streaming answers
 - A small dashboard over `query_log`

@@ -17,7 +17,7 @@ docker compose exec ollama ollama pull nomic-embed-text
 LLM_PROVIDER=ollama docker compose up --build app
 ```
 
-Changing the embedding model changes vector dimensions, so re-ingest (`POST /admin/reingest`) and recreate the `chunks` table after switching.
+Changing the embedding model changes vector dimensions, so re-ingest (`POST /admin/reingest` with header `X-User: tim`) and recreate the `chunks` table after switching.
 
 ## Why the model is pluggable
 

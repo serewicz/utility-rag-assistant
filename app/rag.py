@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import time
+import uuid
 
-from . import hydromet, rbac
+from . import hydromet, measure, rbac
 
 SYSTEM = ("You answer questions for utility staff using ONLY the numbered context. "
           "Cite sources like [1]. If the context does not contain the answer, say you don't know. "
@@ -14,8 +15,10 @@ class RAG:
     def __init__(self, store, provider, settings):
         self.store, self.provider, self.s = store, provider, settings
         self.hydromet_fetch = None  # tests inject a mock here
+        measure.init(store)  # outcome, feedback and eval tables (idempotent)
 
-    def ask(self, user: str, question: str) -> dict:
+    def ask(self, user: str, question: str, log: bool = True) -> dict:
+        """log=False is for evals, so test traffic does not show up as real usage on the dashboard."""
         t0 = time.perf_counter()
         role, labels = rbac.labels_for(user)
         qvec = self.provider.embed([question])[0]
@@ -33,8 +36,12 @@ class RAG:
         latency = (time.perf_counter() - t0) * 1000
         sources = [dict(n=i + 1, doc=h["doc"], title=h["title"], label=h["label"],
                         source_url=h["source_url"], score=round(h["score"], 3)) for i, h in enumerate(hits)]
-        self.store.log(user=user, role=role, question=question, latency_ms=latency, tokens_in=res.tokens_in,
+        qid = uuid.uuid4().hex
+        top = max((h["score"] for h in hits if h["doc"] != "hydromet-live"), default=None)
+        if log:
+            measure.record_outcome(self.store, qid, user, role, question, res.text, top)
+            self.store.log(user=user, role=role, question=question, latency_ms=latency, tokens_in=res.tokens_in,
                        tokens_out=res.tokens_out, cost_usd=cost, provider=self.provider.name,
-                       sources=[s["doc"] for s in sources])
-        return dict(answer=res.text, role=role, sources=sources, latency_ms=round(latency, 1),
+                           sources=[s["doc"] for s in sources])
+        return dict(qid=qid, answer=res.text, role=role, sources=sources, latency_ms=round(latency, 1),
                     tokens_in=res.tokens_in, tokens_out=res.tokens_out, est_cost_usd=round(cost, 6))
