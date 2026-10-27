@@ -25,16 +25,16 @@ Current result with the offline provider: **100% retrieval hit-rate, 95% answer 
 
 ```mermaid
 flowchart LR
-  U[User + role] -->|question| API[FastAPI /ask]
-  API --> R{RBAC: role -> allowed labels}
+  U[User + role] -->|question| API["FastAPI /ask"]
+  API --> R{"RBAC: role to allowed labels"}
   R --> E[Embed question]
   E --> S[(Vector store<br/>pgvector or SQLite)]
   S -->|top-k chunks, label-filtered in the query| P[Prompt with numbered context]
   P --> L[LLM provider<br/>OpenAI-compatible / Ollama / fake]
   L --> A[Answer + citations]
   API --> LOG[(query_log: user, role,<br/>latency, tokens, cost)]
-  LOG --> M[/metrics]
-  D[docs: md / pdf / txt + label] --> I[Ingest: chunk + embed] --> S
+  LOG --> M["/metrics page"]
+  D["docs: md, pdf, txt + label"] --> I[Ingest: chunk + embed] --> S
 ```
 
 ## LCRA proof of concept: Highland Lakes flood and water supply
