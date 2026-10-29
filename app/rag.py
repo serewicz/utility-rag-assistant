@@ -17,8 +17,11 @@ class RAG:
         self.hydromet_fetch = None  # tests inject a mock here
         measure.init(store)  # outcome, feedback and eval tables (idempotent)
 
-    def ask(self, user: str, question: str, log: bool = True) -> dict:
-        """log=False is for evals, so test traffic does not show up as real usage on the dashboard."""
+    def ask(self, user: str, question: str, log: bool = True, include_text: bool = False) -> dict:
+        """log=False is for evals, so test traffic does not show up as real usage on the dashboard.
+
+        include_text=True adds each passage's text to its source. Only hits that passed the
+        caller's label filter are ever in `hits`, so text is limited to what the caller may see."""
         t0 = time.perf_counter()
         role, labels = rbac.labels_for(user)
         qvec = self.provider.embed([question])[0]
@@ -35,7 +38,8 @@ class RAG:
         cost = res.tokens_in / 1e6 * self.s.price_in + res.tokens_out / 1e6 * self.s.price_out
         latency = (time.perf_counter() - t0) * 1000
         sources = [dict(n=i + 1, doc=h["doc"], title=h["title"], label=h["label"],
-                        source_url=h["source_url"], score=round(h["score"], 3)) for i, h in enumerate(hits)]
+                        source_url=h["source_url"], score=round(h["score"], 3), **({"text": h["text"]} if include_text else {}))
+                   for i, h in enumerate(hits)]
         qid = uuid.uuid4().hex
         top = max((h["score"] for h in hits if h["doc"] != "hydromet-live"), default=None)
         if log:

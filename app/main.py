@@ -80,7 +80,7 @@ def create_app(rag: RAG | None = None, docs_dir: Path = ROOT / "data" / "docs",
     @app.post("/ask")
     def ask(body: Ask, x_user: str = Header(default="guest")):
         # Demo auth: the X-User header. Replace with SSO/OIDC in production.
-        return rag.ask(x_user, body.question)
+        return rag.ask(x_user, body.question, include_text=True)
 
     @app.post("/briefing/flood")
     def briefing_flood(x_user: str = Header(default="guest")):
